@@ -1,0 +1,13 @@
+merchant_category,category_group,is_essential
+Grocery,Food & Beverage,true
+Restaurant,Food & Beverage,false
+Gas,Transportation,true
+Utilities,Home & Bills,true
+Entertainment,Leisure,false
+Travel,Transportation,false
+Healthcare,Health,true
+Retail,Shopping,false
+ATM,Banking,true
+Salary,Income,true
+Transfer,Banking,true
+Unclassified,Other,false
