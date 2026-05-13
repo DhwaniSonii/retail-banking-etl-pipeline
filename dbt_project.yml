@@ -1,0 +1,42 @@
+name: 'banking_data_platform'
+version: '1.0.0'
+config-version: 2
+
+profile: 'banking_data_platform'
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+analysis-paths: ["analyses"]
+seed-paths: ["seeds"]
+
+target-path: "target"
+clean-targets: ["target", "dbt_packages"]
+
+models:
+  banking_data_platform:
+    staging:
+      +schema: staging
+      +materialized: table
+      +tags: ['staging']
+    marts:
+      +schema: marts
+      +materialized: incremental
+      +tags: ['marts']
+    metrics:
+      +schema: metrics
+      +materialized: incremental
+      +tags: ['metrics']
+
+vars:
+  usd_to_cad_rate: 1.36
+  dormancy_threshold_days: 730
+  large_txn_threshold_cad: 10000
+  dbt_env: "{{ env_var('DBT_ENV', 'dev') }}"
+
+on-run-start:
+  - "SET statement_timeout = '30min'"
+
+on-run-end:
+  - "{{ log('dbt run complete at ' ~ run_started_at, info=True) }}"

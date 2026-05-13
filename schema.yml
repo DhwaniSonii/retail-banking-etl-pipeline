@@ -1,0 +1,187 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: staging
+    description: "Raw landing zone tables loaded by the Python ETL extractors"
+    tables:
+      - name: customers_raw
+        description: "Raw customer data from Core Banking System v4"
+        columns:
+          - name: customer_id
+            description: "Unique customer identifier. Format: CUST + 7 digits"
+            tests: [not_null, unique]
+          - name: kyc_status
+            tests:
+              - accepted_values:
+                  values: ['Verified', 'Pending', 'Expired', 'Unknown']
+      - name: accounts_raw
+        description: "Raw account data from Core Banking System v4"
+        columns:
+          - name: account_id
+            tests: [not_null, unique]
+          - name: customer_id
+            tests:
+              - not_null
+              - relationships:
+                  to: source('raw', 'customers_raw')
+                  field: customer_id
+      - name: transactions_raw
+        description: "Raw transaction data from Transaction Processing System v2"
+        columns:
+          - name: transaction_id
+            tests: [not_null, unique]
+          - name: amount
+            tests:
+              - not_null
+              - dbt_utils.accepted_range:
+                  min_value: 0
+                  max_value: 500000
+      - name: credit_data_raw
+        description: "Raw credit and loan data from Credit Risk System v3"
+        columns:
+          - name: loan_id
+            tests: [not_null, unique]
+
+models:
+
+  # ── Staging ──────────────────────────────────────────────────────────────────
+
+  - name: stg_customers
+    description: >
+      Cleaned customer data. PII masked in non-prod environments.
+      Derives age_years, tenure_years, and age_band from raw fields.
+    columns:
+      - name: customer_id
+        description: "Natural key from Core Banking System"
+        tests: [not_null, unique]
+      - name: kyc_status
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Verified', 'Pending', 'Expired', 'Unknown']
+      - name: customer_segment
+        tests:
+          - accepted_values:
+              values: ['Mass Market', 'Affluent', 'Private Banking', 'Small Business']
+      - name: age_band
+        tests:
+          - accepted_values:
+              values: ['18-25', '26-35', '36-50', '51-65', '65+']
+
+  - name: stg_accounts
+    description: >
+      Cleaned account data. Derives dormancy flags (730-day threshold),
+      balance tiers, account age, and overdraft indicators.
+    columns:
+      - name: account_id
+        tests: [not_null, unique]
+      - name: customer_id
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_customers')
+              field: customer_id
+      - name: is_dormant
+        tests: [not_null]
+      - name: balance_tier
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['Negative', 'Under $1K', '$1K-$10K', '$10K-$50K', '$50K-$100K', 'Over $100K']
+
+  - name: stg_transactions
+    description: >
+      Cleaned and deduplicated transaction data. Amounts normalized to CAD.
+      Derives signed amounts, date parts, and FINTRAC large-transaction flags.
+    columns:
+      - name: transaction_id
+        tests: [not_null, unique]
+      - name: amount_cad
+        description: "Transaction amount in Canadian dollars"
+        tests: [not_null]
+      - name: is_large_transaction
+        description: "TRUE if amount_cad >= $10,000 (FINTRAC reporting threshold)"
+        tests: [not_null]
+      - name: status
+        tests:
+          - accepted_values:
+              values: ['Completed', 'Pending', 'Failed', 'Reversed']
+
+  # ── Marts ─────────────────────────────────────────────────────────────────────
+
+  - name: dim_customer
+    description: >
+      Customer dimension table. SCD Type 2: preserves full history of
+      customer attribute changes. Use is_current = TRUE for latest snapshot.
+    columns:
+      - name: customer_sk
+        description: "Surrogate key (system-generated)"
+        tests: [not_null, unique]
+      - name: customer_id
+        description: "Natural key from Core Banking System"
+        tests: [not_null]
+      - name: is_current
+        tests: [not_null]
+      - name: effective_from
+        tests: [not_null]
+
+  - name: dim_account
+    description: >
+      Account dimension table. SCD Type 2 with dormancy, balance tier,
+      and overdraft flags refreshed daily.
+    columns:
+      - name: account_sk
+        tests: [not_null, unique]
+      - name: account_id
+        tests: [not_null]
+      - name: customer_sk
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customer')
+              field: customer_sk
+
+  - name: fact_transactions
+    description: >
+      Central fact table. Grain: one row per financial transaction.
+      All monetary amounts in CAD. Partitioned by month for query performance.
+    columns:
+      - name: transaction_id
+        tests: [not_null, unique]
+      - name: account_sk
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_account')
+              field: account_sk
+      - name: customer_sk
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_customer')
+              field: customer_sk
+      - name: date_sk
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_date')
+              field: date_sk
+      - name: amount_cad
+        tests: [not_null]
+
+  # ── Metrics ───────────────────────────────────────────────────────────────────
+
+  - name: kpi_daily_summary
+    description: >
+      Daily transaction KPI rollup for executive dashboards.
+      Tracks volume, value, failure rates, and FINTRAC-reportable transactions.
+    columns:
+      - name: summary_date
+        tests: [not_null, unique]
+      - name: failure_rate_pct
+        description: "Percentage of transactions with status = Failed"
+        tests:
+          - dbt_utils.accepted_range:
+              min_value: 0
+              max_value: 100
