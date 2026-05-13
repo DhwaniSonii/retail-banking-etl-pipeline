@@ -1,0 +1,33 @@
+# Core data engineering
+pandas>=2.1.0
+numpy>=1.26.0
+pyarrow>=14.0.0         # Parquet read/write
+fastparquet>=2023.10.0  # Alternative Parquet engine
+
+# Database
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.0  # PostgreSQL adapter
+
+# Data generation (dev/test only)
+faker>=20.0.0
+
+# dbt
+dbt-core>=1.6.0
+dbt-postgres>=1.6.0
+dbt-utils>=1.1.0
+
+# Orchestration
+apache-airflow>=2.7.0
+
+# Data quality
+great-expectations>=0.18.0  # Optional: for extended DQ checks
+
+# Analysis & notebooks
+jupyter>=1.0.0
+matplotlib>=3.8.0
+seaborn>=0.13.0
+
+# Utilities
+python-dotenv>=1.0.0
+click>=8.1.0
+pyyaml>=6.0.0
