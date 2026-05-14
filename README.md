@@ -7,7 +7,7 @@
 ![PostgreSQL](https://img.shields.io/badge/postgresql-14-336791)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-> **Live Demo:** `streamlit run dashboard/app.py`
+> **Live Demo:** `![Dashboard](docs/Dashboard.png)`
 
 A production-grade data engineering project simulating a retail banking data platform. Covers the full data lifecycle: **ingestion → ETL → data modeling → quality checks → governance → lineage → metadata cataloguing**.
 
