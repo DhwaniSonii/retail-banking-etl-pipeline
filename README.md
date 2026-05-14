@@ -7,7 +7,9 @@
 ![PostgreSQL](https://img.shields.io/badge/postgresql-14-336791)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-> **Live Demo:** `![Dashboard](docs/Dashboard.png)`
+> **Live Demo:** 
+<img width="1844" height="780" alt="Dashboard" src="https://github.com/user-attachments/assets/d249fd84-2114-4724-97c7-a460aecf47ea" />
+
 
 A production-grade data engineering project simulating a retail banking data platform. Covers the full data lifecycle: **ingestion → ETL → data modeling → quality checks → governance → lineage → metadata cataloguing**.
 
@@ -67,13 +69,13 @@ banking_data_platform/
 ### Target: Star Schema (Dimensional Model)
 ```
                     ┌─────────────────┐
-                    │  FACT_TRANSACTIONS│
-                    │  (grain: 1 txn)  │
-                    └────────┬─────────┘
+                    │FACT_TRANSACTIONS│
+                    │  (grain: 1 txn) │
+                    └────────┬────────┘
            ┌─────────────────┼─────────────────┐
            ▼                 ▼                 ▼
   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
-  │  DIM_CUSTOMER │  │  DIM_ACCOUNT │  │   DIM_DATE   │
+  │ DIM_CUSTOMER │  │  DIM_ACCOUNT │  │   DIM_DATE   │
   └──────────────┘  └──────────────┘  └──────────────┘
 ```
 
