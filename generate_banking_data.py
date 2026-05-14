@@ -1,14 +1,6 @@
-"""
-Upstream Data Extractor — Synthetic Banking Data Generator
-
-Simulates extraction from three upstream source systems:
-  1. Core Banking System  → customers + accounts
-  2. Transaction Processing System → debit/credit transactions
-  3. Credit Risk System → credit scores + loan data
-
-Writes raw CSVs to data/raw/ (mimicking a landing zone ingestion pattern).
-Metadata for each extract is registered to the governance catalog.
-"""
+# generates synthetic banking data for pipeline testing
+# pulls from 3 source systems - core banking, payments, credit risk
+# saves to data/raw/ and logs to governance catalog
 
 import os
 import json
@@ -36,8 +28,7 @@ CATALOG_PATH = Path(__file__).parents[2] / "governance" / "metadata" / "catalog.
 RAW_DIR.mkdir(parents=True, exist_ok=True)
 CATALOG_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-# ── Constants ──────────────────────────────────────────────────────────────────
-
+# Constants
 ACCOUNT_TYPES = ["Chequing", "Savings", "TFSA", "RRSP", "GIC"]
 TRANSACTION_TYPES = ["Debit", "Credit", "Transfer", "Bill Payment", "ATM Withdrawal"]
 TRANSACTION_CHANNELS = ["Online", "Branch", "ATM", "Mobile", "POS"]
@@ -53,7 +44,7 @@ START_DATE = datetime(2023, 1, 1)
 END_DATE = datetime(2024, 12, 31)
 
 
-# ── Helpers ────────────────────────────────────────────────────────────────────
+# Helpers
 
 def _random_dates(start: datetime, end: datetime, n: int) -> list[datetime]:
     delta = (end - start).days
@@ -83,7 +74,8 @@ def _register_to_catalog(dataset_name: str, meta: dict) -> None:
     log.info("Catalog updated → %s", dataset_name)
 
 
-# ── Source System 1: Core Banking — Customers ──────────────────────────────────
+
+#Source System 1: Core Banking — Customers
 
 def extract_customers() -> pd.DataFrame:
     log.info("Extracting customers from Core Banking System (%d records)…", N_CUSTOMERS)
@@ -131,7 +123,7 @@ def extract_customers() -> pd.DataFrame:
     return df
 
 
-# ── Source System 1: Core Banking — Accounts ───────────────────────────────────
+# Source System 1: Core Banking — Accounts
 
 def extract_accounts(customer_ids: list[str]) -> pd.DataFrame:
     log.info("Extracting accounts from Core Banking System (%d records)…", N_ACCOUNTS)
@@ -188,7 +180,7 @@ def extract_accounts(customer_ids: list[str]) -> pd.DataFrame:
     return df
 
 
-# ── Source System 2: Transaction Processing System ─────────────────────────────
+# Source System 2: Transaction Processing System 
 
 def extract_transactions(account_ids: list[str]) -> pd.DataFrame:
     log.info("Extracting transactions from TPS (%d records)…", N_TRANSACTIONS)
