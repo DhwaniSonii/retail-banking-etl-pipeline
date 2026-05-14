@@ -27,10 +27,10 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# ── TD-inspired color palette ──────────────────────────────────────────────────
+# ── color palette ──────────────────────────────────────────────────
 
 COLORS = {
-    "primary":   "#2E7D32",   # TD green
+    "primary":   "#2E7D32",   
     "secondary": "#1B5E20",
     "accent":    "#66BB6A",
     "warning":   "#F9A825",
